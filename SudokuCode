@@ -1,0 +1,401 @@
+/*
+Title: Sudoku Solver
+Names: Ian Armstrong and Brandon Spears
+*/
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+class individualSquare {
+private:
+int userValue;
+int computerValue;
+bool given;
+vector<int> numList;
+
+public:
+
+void setUserValue(int newUserValue) {
+        userValue = newUserValue;
+}
+
+void setComputerValue(int newComputerValue) {
+        computerValue = newComputerValue;
+}
+
+void setNumList(vector<int> newNumList) {
+        numList = newNumList;
+}
+
+void setGiven(bool value)  {
+        given = value;
+}
+
+int getUserValue()  {
+        return userValue;
+}
+
+int getComputerValue()  {
+        return computerValue;
+}
+bool getGiven() {
+        return given;
+}
+
+vector<int> getNumList()    {
+        return numList;
+}
+
+int returnRandom()  {
+        int returnValue = 0;
+        if(numList.empty()) {
+                return returnValue;
+        }else   {
+                int position = rand() % numList.size();
+                returnValue = numList.at(position);
+                removeNumber(position);
+                return returnValue;
+        }
+}
+
+void removeNumber(int position) {
+        numList.erase(numList.begin() + position);
+}
+
+void resetNumList() {
+        numList = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+}
+
+bool isEmpty()  {
+        if (numList.empty())    {
+                return true;
+        }else   {
+                return false;
+        }
+}
+
+void displayNumList()   {
+        cout << "\nnumList: ";
+        for (int i = 0; i < numList.size(); i++)  {
+                cout << numList.at(i) << " ";
+        }
+        cout << endl;
+}
+
+friend istream& operator>>(istream &input, individualSquare &is ) {
+        cout << "\nEnter the value of the individual square: ";
+        input >> is.userValue;
+        return input;
+}
+
+friend ostream& operator<<(ostream &output, const individualSquare &is ) {
+        output << is.userValue << endl;
+        return output;
+}
+
+individualSquare()  {
+        userValue = 0;
+        computerValue = 0;
+        given = true;
+        numList = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+}
+
+};
+
+void displayNumbers(individualSquare totalGrid [9][9])   {
+        cout << endl;
+        cout << "    \033[4m 1  2  3  4  5  6  7  8  9\033[0m" << endl;
+        for(int i = 0; i < 9; i++)  {//row counter
+                cout << "  " << i+1 << "| ";
+                for(int j = 0; j < 9; j++)   {//column counter
+                        if (totalGrid[i][j].getGiven())  {
+                                cout << totalGrid[i][j].getUserValue() << "  ";
+                        }else if (totalGrid[i][j].getUserValue() != 0)  {
+                                cout << "\e[1m\033[4m" << totalGrid[i][j].getUserValue() << "\033[0m\e[0m  ";
+                        }else   {
+                                cout << "\e[1m\033[4m \033[0m\e[0m  ";
+                        }
+                }
+                cout << endl;
+        }
+}
+
+void displayCompNums(individualSquare totalGrid [9][9])   {
+        cout << endl;
+        cout << "    \033[4m 1  2  3  4  5  6  7  8  9\033[0m" << endl;
+        for(int i = 0; i < 9; i++)  {//row counter
+                cout << "  " << i+1 << "| ";
+                for(int j = 0; j < 9; j++)   {//column counter
+                        cout << totalGrid[i][j].getComputerValue() << "  ";
+                }
+                cout << endl;
+        }
+}
+
+bool checkColumn(individualSquare totalGrid[9][9], int row, int column, int checkVal)    {
+        for(int i = 0; i < row; i++)   {
+                if(totalGrid[i][column].getComputerValue() == checkVal) {
+                        return false;
+                }
+        }
+        return true;
+}
+
+bool checkRow(individualSquare totalGrid[9][9], int row, int column, int checkVal)    {
+        for(int i = 0; i < column; i++)   {
+                if(totalGrid[row][i].getComputerValue() == checkVal) {
+                        return false;
+                }
+        }
+        return true;
+}
+
+bool checkSquare(individualSquare totalGrid[9][9], int row, int col, int checkVal)    { //I DON'T WORK!!!
+        int newRow = 0, newCol = 0, fullCol = 0;
+        if (row >= 6)    {
+                newRow = 6;
+        }else if(row >= 3)   {
+                newRow = 3;
+        }else   {
+                newRow = 0;
+        }
+        if (col >= 6)    {
+                newCol = 6;
+        }else if(col >= 3)   {
+                newCol = 3;
+        }else   {
+                newCol = 0;
+        }
+        for (int i = row; i >= newRow; i--) {
+                for (int j = col; j >= newCol; j--) {
+                        if (totalGrid[i][j].getComputerValue() == checkVal) {
+                                return false;
+                        }
+                }
+                if (i > newRow)  {
+                        col = newCol + 2;
+                }
+        }
+        return true;
+}
+
+void populateGrid(individualSquare totalGrid[9][9]) {
+        for (int row = 0; row < 9; row++)  {
+                for (int col = 0; col < 9; col++)   {
+                        bool loopMe = true;
+                        while (loopMe)  {
+                                int randNum = totalGrid[row][col].returnRandom();
+                                if (checkColumn(totalGrid, row, col, randNum) && checkRow(totalGrid, row, col, randNum) && checkSquare(totalGrid, row, col, randNum))  {
+                                        loopMe = false;
+                                        totalGrid[row][col].setComputerValue(randNum);
+                                }
+                                if (totalGrid[row][col].isEmpty())  {
+                                        loopMe = false;
+                                        totalGrid[row][col].resetNumList();
+                                        if (col == 0)   {
+                                                row -= 1;
+                                                col = 7;
+                                        }else if(col == 1)  {
+                                                row -= 1;
+                                                col = 8;
+                                        }else   {
+                                                col -= 2;
+                                        }
+                                }
+                        }
+                }
+        }
+        for (int row = 0; row < 9; row++)   {
+                for(int col = 0; col < 9; col++)    {
+                        totalGrid[row][col].setUserValue(totalGrid[row][col].getComputerValue());
+                }
+        }
+}
+
+void setDifficulty(individualSquare totalGrid[9][9]) { //Sets the difficulty (i.e. sets the number of empty squares)
+        int elementsRemoved = 0;
+        bool loopMe = true;
+        while (loopMe)  {
+                cout << "Select difficulty Level (1, 2, or 3): ";
+                cin >> elementsRemoved;
+                while (cin.fail())  {
+                        cout << "Not a number. Please re-enter the difficulty: ";
+                        cin.clear();
+                        cin.ignore(256,'\n');
+                        cin >> elementsRemoved;
+                }
+                switch (elementsRemoved)
+                {
+                case 1:
+                        loopMe = false;
+                        elementsRemoved = 45;
+                        break;
+                case 2:
+                        loopMe = false;
+                        elementsRemoved = 55;
+                        break;
+                case 3:
+                        loopMe = false;
+                        elementsRemoved = 65;
+                        break;
+                default:
+                        cout << "Invalid number" << endl;
+                }
+        }
+        for (int i = 0; i < elementsRemoved; i++) {
+                bool sentinelVal = true;
+                while (sentinelVal) {
+                        int row = rand() % 9;
+                        int col = rand() % 9;
+                        if (totalGrid[row][col].getUserValue() != 0)    {
+                                totalGrid[row][col].setUserValue(0);
+                                totalGrid[row][col].setGiven(false);
+                                sentinelVal = false;
+                        }
+                }
+        }
+}
+
+void placeValue(individualSquare totalGrid [9][9])   { //Gets and inserts the users value
+        cout << endl;
+        bool checkVal = true;
+        int row = 0, col = 0, posValue = 0;
+        while (checkVal)    {
+                cout << "Enter the row coordinate: ";
+                cin >> row;
+                while (cin.fail())  {
+                        cout << "Invalid input. Please a number: ";
+                        cin.clear();
+                        cin.ignore(256,'\n');
+                        cin >> row;
+                }
+                if (row > 0 && row < 10)    {
+                        checkVal = false;
+                }else   {
+                        cout << "Invalid range" << endl;
+                }
+        }
+        checkVal = true;
+        while (checkVal)    {
+                cout << "Enter the column coordinate: ";
+                cin >> col;
+                while (cin.fail())  {
+                        cout << "Invalid input. Please a number: ";
+                        cin.clear();
+                        cin.ignore(256,'\n');
+                        cin >> col;
+                }
+                if (col > 0 && col < 10)    {
+                        checkVal = false;
+                }else   {
+                        cout << "Invalid range" << endl;
+                }
+        }
+        checkVal = true;
+        while (checkVal)    {
+                cout << "Enter the value (0 to cancel): ";
+                cin >> posValue;
+                while (cin.fail())  {
+                        cout << "Invalid input. Please a number: ";
+                        cin.clear();
+                        cin.ignore(256,'\n');
+                        cin >> posValue;
+                }
+                if (col >= 0 && col < 10)    {
+                        checkVal = false;
+                }else   {
+                        cout << "Invalid range" << endl;
+                }
+        }
+        if (posValue == 0)  {
+                //Exit Function
+        }else if (totalGrid[row-1][col-1].getGiven()) {
+                cout << "Invalid Position" << endl;
+        }else   {
+                totalGrid[row-1][col-1].setUserValue(posValue);
+        }
+}
+
+int menu() { // Menu function, returns user choice
+        bool checkVal = true;
+        int menuVal = 0;
+        cout << "Menu:" << endl;
+        cout << "1. Display Sudoku Board" << endl;
+        cout << "2. Check Board" << endl;
+        cout << "3. Enter Value" << endl;
+        cout << "4. Exit" << endl;
+        while (checkVal)    {
+                cout << "Menu Choice: ";
+                cin >> menuVal;
+                while (cin.fail())  {
+                        cout << "Invalid input. Please a number: ";
+                        cin.clear();
+                        cin.ignore(256,'\n');
+                        cin >> menuVal;
+                }
+                if (menuVal > 0 && menuVal < 5)    {
+                        checkVal = false;
+                }else   {
+                        cout << "Invalid range" << endl;
+                }
+        }
+        return menuVal;
+}
+
+void checkBoard(individualSquare totalGrid[9][9]) { //Takes in the current board and checks all values against the computer generated values
+        int count = 0;
+        for (int i = 0; i < 9; i++) {
+                for (int j = 0; j < 9; j++) {
+                        if (totalGrid[i][j].getUserValue() == totalGrid[i][j].getComputerValue()) {
+                                totalGrid[i][j].setGiven(true);
+                        }else   {
+                                count++;
+                        }
+                }
+        }
+        if (count == 0) {
+                cout << "All values are correct" << endl;
+        }
+}
+
+
+int main()  {
+        srand(time(NULL)); //Needed to make random
+        cout << "Sudoku Solver" << endl;
+        cout << "Created By: Ian Armstrong and Brandon Spears" << endl;
+        int numbers[ ] = {10, 20, 30, 40, 50};
+        cout << *(numbers + 3) << endl;
+        individualSquare totalGrid [9][9];
+        populateGrid(totalGrid);
+        setDifficulty(totalGrid);
+        bool loopGame = true;
+        int menuChoice = 0;
+        while (loopGame)    {
+                cout << endl;
+                menuChoice = menu();
+                //cout << "\033[H\033[J";
+                switch(menuChoice)  {
+                case 1:
+                        displayNumbers(totalGrid);
+                        break;
+                case 2:
+                        checkBoard(totalGrid);
+                        break;
+                case 3:
+                        displayNumbers(totalGrid);
+                        placeValue(totalGrid);
+                        break;
+                case 4:
+                        loopGame = false;
+                        break;
+                default:
+                        cout << "Impossible Error. Please report to the game developer immediately" << endl;
+                }
+                cout << endl;
+        }
+        cout << "Thanks for playing" << endl;
+        return 0;
+}
